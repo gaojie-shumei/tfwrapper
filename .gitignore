@@ -7,5 +7,5 @@ model
 *.tfRecord
 *.tf_record
 *.txt
-data/*
+data
 *.pyc
