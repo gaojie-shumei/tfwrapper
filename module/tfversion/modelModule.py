@@ -36,9 +36,17 @@ class ModelModule:
         self._model_save_path = model_save_path
         self._train_ops = train_ops
         self._num_parallel_calls = num_parallel_calls
-        self._global_step = tf.train.get_or_create_global_step()
+        if max_save is None or max_save == 1:
+            self._global_step = None
+        else:
+            self._global_step = tf.train.get_or_create_global_step()
+        self._max_save = max_save
         self._saver = tf.train.Saver(tf.global_variables(), max_to_keep=max_save)
-
+    
+    @property
+    def max_save(self):
+        return self._max_save
+        
     @property
     def saver(self):
         return self._saver
@@ -120,6 +128,18 @@ class ModelModule:
         assignment_map, _ = self.__get_assignment_map_from_checkpoint(vars, model_path)
         tf.train.init_from_checkpoint(model_path, assignment_map)
 
+    def init_session(self):
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.allow_soft_placement = True
+        config.log_device_placement = True
+        sess = tf.Session(config=config)
+        return sess,True
+    
+    def close_session(self, sess:tf.Session):
+        if sess is not None and isinstance(sess, tf.Session):
+            sess.close()
+    
     def fit(self, sess: tf.Session, epoch: int, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
             v_inputs_feed=None, v_outputs_feed=None, v_net_configs_feed=None, batch_size=64,return_outputs=False,
             show_result=True, start_save_model_epoch=None, model_name='model', tr_tf_dataset_init=None,
@@ -147,10 +167,17 @@ class ModelModule:
             is True,the output also in result, the keys will be 'tr_loss','tr_metrics','tr_outputs'
             the validation if exist and do_validation is True   'v_loss','v_metrics','v_outputs'
         '''
+        flag = False
+        if sess is not None and isinstance(sess, tf.Session):
+            pass
+        else:
+            sess, flag = self.init_session()
+            sess.run(tf.global_variables_initializer())
         results = []
         one_epoch_num = 0
         try:
-            sess.run(self.global_step)
+            if self.max_save > 1:
+                sess.run(self.global_step)
         except:
             print("the graph not init, init it now")
             sess.run(tf.global_variables_initializer())
@@ -203,6 +230,8 @@ class ModelModule:
                         results.append(result)
                         if show_result:
                             print("epoch=", i, ",result=", result)
+        if flag:
+            self.close_session(sess)
         return results
 
     def batch_fit(self, sess: tf.Session, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
@@ -230,7 +259,8 @@ class ModelModule:
             the validation if exist and do_validation is True   'v_loss','v_metrics','v_outputs'
         '''
         try:
-            sess.run(self.global_step)
+            if self.max_save > 1:
+                sess.run(self.global_step)
         except:
             print("the graph not init, init it now")
             sess.run(tf.global_variables_initializer())
