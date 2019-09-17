@@ -1,5 +1,4 @@
 from .dataWrapper import *
-# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 class BaseDataProcessor:
     def __init__(self, features_typing_fn: FeatureTypingFunctions=None):

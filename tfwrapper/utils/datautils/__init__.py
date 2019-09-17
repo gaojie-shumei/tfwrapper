@@ -1,0 +1,1 @@
+from tfwrapper.utils.datautils.word2vecUtil import Word2vecUtil

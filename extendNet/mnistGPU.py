@@ -3,13 +3,9 @@ Created on 2019年9月6日
 
 @author: gaojie-202
 '''
-from module.tfversion.dataWrapper import *
-from module.tfversion import baseDataProcessor
-from module.tfversion import modelModule,baseNet
-import os
-from datetime import datetime
-from extendNet.mnistDataWrapperTest import acc
-from tensorflow.contrib.layers.python.layers.rev_block_lib import _acc_grads
+from tfwrapper.base.dataWrapper import *
+from tfwrapper.base import baseDataProcessor
+from tfwrapper.base import modelModule,baseNet
 
 
 class SampleMnistNet(baseNet.BaseNet):

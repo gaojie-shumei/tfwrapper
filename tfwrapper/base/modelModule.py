@@ -6,7 +6,6 @@ import collections
 import re
 from os import path as os_path
 import os
-# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 class ModelModule:

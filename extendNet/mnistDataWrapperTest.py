@@ -1,9 +1,6 @@
-from module.tfversion.dataWrapper import *
-from module.tfversion import baseDataProcessor
-from module.tfversion import modelModule
-import os
-from datetime import datetime
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  #只显示error
+from tfwrapper.base.dataWrapper import *
+from tfwrapper.base import baseDataProcessor
+from tfwrapper.base import modelModule
 
 
 def read_mnist_data(path):
