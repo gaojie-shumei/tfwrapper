@@ -203,7 +203,7 @@ class Word2vecUtil:
             if self.word2vec_model is not None:
                 model = self.word2vec_model
             else:
-                model = Word2Vec.load(self.word2vec_path)
+                model = Word2Vec.load(self.word2vec_path+"/"+name)
             if sentences is not None:
                 flag = 0
                 sentences_set = set(list(itertools.chain.from_iterable(sentences)))
