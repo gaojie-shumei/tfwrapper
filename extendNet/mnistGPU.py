@@ -5,7 +5,7 @@ Created on 2019年9月6日
 '''
 from tfwrapper.base.dataWrapper import *
 from tfwrapper.base import baseDataProcessor
-from tfwrapper.base import modelModule,baseNet
+from tfwrapper.base import tfmodel,baseNet
 
 
 class SampleMnistNet(baseNet.BaseNet):
@@ -71,7 +71,7 @@ with tf.device("/cpu:0"):
     out, loss, acc = mnist_model()
     optimizer = tf.train.AdamOptimizer(lr)
     train_ops = optimizer.minimize(loss)
-    model = modelModule.ModelModule([x,is_real_sample], out, y, loss, train_ops, net_configs=lr, metrics=acc, num_parallel_calls=1)
+    model = tfmodel.TFModel([x,is_real_sample], out, y, loss, train_ops, net_configs=lr, metrics=acc, num_parallel_calls=1)
 
 def train(x_train,y_train,x_test,y_test,train_num,learning_rate,batch_size):
     with tf.device("/cpu:0"):

@@ -1,6 +1,6 @@
 import tensorflow as tf
-from module.tfversion import modelModule
-from module.tfversion import baseNet
+from tfwrapper.base import tfmodel
+from tfwrapper.base import baseNet
 import numpy as np
 from datetime import datetime
 
@@ -25,7 +25,7 @@ def create_model(model_save_path):
     accuracy = tf.reduce_mean(tf.cast(tf.equal(y, tf.argmax(output, axis=-1, output_type=tf.int32)), "float"))
     optimizer = tf.train.AdamOptimizer(0.0005)
     train_ops = optimizer.minimize(loss)
-    model = modelModule.ModelModule(input, output,y, loss, train_ops,None, model_save_path = model_save_path,
+    model = tfmodel.TFModel(input, output,y, loss, train_ops,None, model_save_path = model_save_path,
                                     metrics = accuracy)
     return model
 

@@ -8,7 +8,7 @@ from os import path as os_path
 import os
 
 
-class ModelModule:
+class TFModel:
     def __init__(self, inputs: Union[tf.Tensor, List[tf.Tensor]], outputs: Union[tf.Tensor, List[tf.Tensor]],
                  standard_outputs: Union[tf.Tensor, List[tf.Tensor]], loss: tf.Tensor, train_ops: tf.Tensor,
                  net_configs: Union[tf.Tensor, List[tf.Tensor]] = None, model_save_path: str = None,

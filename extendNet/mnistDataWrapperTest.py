@@ -1,6 +1,6 @@
 from tfwrapper.base.dataWrapper import *
 from tfwrapper.base import baseDataProcessor
-from tfwrapper.base import modelModule
+from tfwrapper.base import tfmodel
 
 
 def read_mnist_data(path):
@@ -51,7 +51,7 @@ def train(x_train,y_train,x_test,y_test,train_num,learning_rate,batch_size):
     with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
         train_ops = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
     init = tf.global_variables_initializer()
-    model = modelModule.ModelModule([x, is_real_sample], out, y, loss, train_ops, None,
+    model = tfmodel.TFModel([x, is_real_sample], out, y, loss, train_ops, None,
                                     "../model/mnistWrapper", acc, 0)
     with tf.Session() as sess:
         sess.run(init)
