@@ -6,8 +6,8 @@ Created on 2019年9月17日
 import setuptools
 # setuptools.setup(
 #     name = "tfwrapper",
-#     version = "1.0",
-#     description = "This is a wrapper for tf.Session().run and tf.data.Dataset in tensorflow1.x",
+#     version = "2.0",
+#     description = "This is a wrapper for tensorflow",
 #     author = "Jie Gao",
 #     maintainer = "Jie Gao",
 #     author_email = "gaojiexcq@163.com",
@@ -17,9 +17,9 @@ import setuptools
 #     platforms = "python3",
 #     download_url = "https://github.com/gjxcq/tfwrapper",
 #     install_requires = [
-#         "tensorflow<=1.13.1,>=1.10",
+#         "tensorflow",
 #         "gensim<=3.6.0",
-#         "numpy<=1.16.4"
+#         "numpy"
 #     ],
 #     requires = [
 #         "tensorflow",
@@ -30,8 +30,8 @@ import setuptools
 # )
 setuptools.setup(
     name = "tfwrapper-gpu",
-    version = "1.0",
-    description = "This is a wrapper for tf.Session().run and tf.data.Dataset in tensorflow1.x",
+    version = "2.0",
+    description = "This is a wrapper for tensorflow",
     author = "Jie Gao",
     maintainer = "Jie Gao",
     author_email = "gaojiexcq@163.com",
@@ -41,9 +41,9 @@ setuptools.setup(
     platforms = "python3",
     download_url = "https://github.com/gjxcq/tfwrapper",
     install_requires = [
-        "tensorflow-gpu<=1.13.1,>=1.10",
+        "tensorflow-gpu",
         "gensim<=3.6.0",
-        "numpy<=1.16.4"
+        "numpy"
     ],
     requires = [
         "tensorflow",
