@@ -12,16 +12,13 @@ class InputSample:
         :param input_x: the sample data, e.g:{key:value,key:value}
         :param input_y: the sample answer e.g:{key:value,key:value}
         '''
-        try:
-            if guid is None:
-                raise ValueError("the guid should provide")
-            if input_x is None:
-                raise ValueError("the input_x should provide")
-            self.guid = guid
-            self.input_x = input_x
-            self.input_y = input_y
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+        if guid is None:
+            raise ValueError("the guid should provide")
+        if input_x is None:
+            raise ValueError("the input_x should provide")
+        self.guid = guid
+        self.input_x = input_x
+        self.input_y = input_y
 
 
 class FeatureTypingFunctions:
@@ -36,24 +33,21 @@ class FeatureTypingFunctions:
         :param y_fns: same to x_fns
         :param is_real_sample_fn: a function in [int64_feature, float_feature, bytes_feature]
         '''
-        try:
-            if x_fns is None:
-                raise ValueError("x_fns should provide")
-            if name_to_features is None:
-                raise ValueError("name_to_features should be provide")
-            if is_real_sample_fn is None:
-                is_real_sample_fn = FeatureTypingFunctions.int64_feature
-            self.x_fns = x_fns
-            self.y_fns = y_fns
-            self.is_real_sample_fn = is_real_sample_fn
-            if "is_real_sample" not in name_to_features:
-                try:
-                    name_to_features["is_real_sample"] = tf.io.FixedLenFeature(shape=[], dtype=tf.int64)
-                except:
-                    name_to_features["is_real_sample"] = tf.FixedLenFeature(shape=[], dtype=tf.int64)
-            self.name_to_features = name_to_features
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+        if x_fns is None:
+            raise ValueError("x_fns should provide")
+        if name_to_features is None:
+            raise ValueError("name_to_features should be provide")
+        if is_real_sample_fn is None:
+            is_real_sample_fn = FeatureTypingFunctions.int64_feature
+        self.x_fns = x_fns
+        self.y_fns = y_fns
+        self.is_real_sample_fn = is_real_sample_fn
+        if "is_real_sample" not in name_to_features:
+            try:
+                name_to_features["is_real_sample"] = tf.io.FixedLenFeature(shape=[], dtype=tf.int64)
+            except:
+                name_to_features["is_real_sample"] = tf.FixedLenFeature(shape=[], dtype=tf.int64)
+        self.name_to_features = name_to_features
 
     @classmethod
     def int64_feature(cls, values):
@@ -83,29 +77,19 @@ class InputFeatures:
                       this should be a Dict same to input_x but value for padsample
         :param is_real_sample:  is InputSample True, is PadSample False
         '''
-        try:
-            if net_x is None:
-                raise ValueError("the net_x should provide")
-            self.net_x = net_x
-            self.net_y = net_y
-            self.is_real_sample = is_real_sample
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+        if net_x is None:
+            raise ValueError("the net_x should provide")
+        self.net_x = net_x
+        self.net_y = net_y
+        self.is_real_sample = is_real_sample
+
 
 class TFDataWrapper:
     def __init__(self):
-        self._tf_data = None
         super(TFDataWrapper, self).__init__()
-    
-    def iter(self):
-        try:
-            if self._tf_data is None:
-                raise RuntimeError("NoneType can't iter")
-            return iter(self._tf_data)
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-    
-    def wrapper(self,all_features: List[InputFeatures], batch_size, is_train=True,
+
+    @staticmethod
+    def wrapper(all_features: List[InputFeatures], batch_size, is_train=True,
                 drop_remainder=False, num_parallel_calls=None):
         '''
         :param all_features: the all data for network
@@ -190,10 +174,12 @@ class TFDataWrapper:
                 tf_data = tf_data.batch(batch_size, drop_remainder)
             except:
                 tf_data = tf_data.batch(batch_size)
-            self._tf_data = tf_data
+            it = tf_data.make_initializable_iterator()
+            data = it.get_next()
+            iterator_init = it.initializer
         except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-        return
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
+        return tf_data, data, iterator_init
 
     def __call__(self, all_features: List[InputFeatures], batch_size, is_train=True,
                  drop_remainder=False, num_parallel_calls=None):
@@ -206,9 +192,9 @@ class TFDataWrapper:
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
-        self.wrapper(all_features, batch_size, is_train, drop_remainder,num_parallel_calls)
-    
-    
+        tf_data, data, iterator_init = self.wrapper(all_features, batch_size, is_train, drop_remainder,
+                                                    num_parallel_calls)
+        return tf_data, data, iterator_init
 
 
 class TFRecordWrapper:
@@ -217,70 +203,55 @@ class TFRecordWrapper:
         :param file_path: TFRecord file path
         :param feature_typing_fn:a FeatureTypingFunctions for net_x,net_y,is_real_sample
         '''
-        try:
-            if file_path is None or file_path == "":
-                raise ValueError("the file_path should provide")
-            else:
-                self.file_path = file_path
-            if feature_typing_fn is None:
-                raise ValueError("feature_typing_fn should provide")
-            self.feature_typing_fn = feature_typing_fn
-            if need_write:
-                try:
-                    self.writer = tf.io.TFRecordWriter(self.file_path)
-                except:
-                    self.writer = tf.python_io.TFRecordWriter(self.file_path)
-            self.need_write = need_write
-            self._tf_record = None
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-    
-    def iter(self):
-        try:
-            if self._tf_data is None:
-                raise RuntimeError("NoneType can't iter")
-            return iter(self._tf_record)
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-    
+        if file_path is None or file_path == "":
+            raise ValueError("the file_path should provide")
+        else:
+            self.file_path = file_path
+        if feature_typing_fn is None:
+            raise ValueError("feature_typing_fn should provide")
+        self.feature_typing_fn = feature_typing_fn
+        if need_write:
+            try:
+                self.writer = tf.io.TFRecordWriter(self.file_path)
+            except:
+                self.writer = tf.python_io.TFRecordWriter(self.file_path)
+        self.need_write = need_write
+
     def __feature2dict(self, f):
-        try:
-            features = collections.OrderedDict()
-            for x_key in f.net_x:
-                if isinstance(f.net_x[x_key], list):
-                    try:
-                        features[x_key] = self.feature_typing_fn.x_fns[x_key](f.net_x[x_key])
-                    except TypeError as e:
-                        raise TypeError(str(e))
-                elif isinstance(f.net_x[x_key], np.ndarray):
-                    try:
-                        features[x_key] = self.feature_typing_fn.x_fns[x_key](f.net_x[x_key].tolist())
-                    except TypeError as e:
-                        raise TypeError(str(e))
-                else:
-                    try:
-                        features[x_key] = self.feature_typing_fn.x_fns[x_key]([f.net_x[x_key]])
-                    except TypeError as e:
-                        raise TypeError(str(e))
-            for y_key in f.net_y:
-                if isinstance(f.net_y[y_key], list):
-                    try:
-                        features[y_key] = self.feature_typing_fn.y_fns[y_key](f.net_y[y_key])
-                    except TypeError as e:
-                        raise TypeError(str(e))
-                elif isinstance(f.net_y[y_key], np.ndarray):
-                    try:
-                        features[y_key] = self.feature_typing_fn.y_fns[y_key](f.net_y[y_key].tolist())
-                    except TypeError as e:
-                        raise TypeError(str(e))
-                else:
-                    try:
-                        features[y_key] = self.feature_typing_fn.y_fns[y_key]([f.net_y[y_key]])
-                    except TypeError as e:
-                        raise TypeError(str(e))
-            features["is_real_sample"] = self.feature_typing_fn.is_real_sample_fn([f.is_real_sample])
-        except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+        features = collections.OrderedDict()
+        for x_key in f.net_x:
+            if isinstance(f.net_x[x_key], list):
+                try:
+                    features[x_key] = self.feature_typing_fn.x_fns[x_key](f.net_x[x_key])
+                except TypeError as e:
+                    raise TypeError(str(e))
+            elif isinstance(f.net_x[x_key], np.ndarray):
+                try:
+                    features[x_key] = self.feature_typing_fn.x_fns[x_key](f.net_x[x_key].tolist())
+                except TypeError as e:
+                    raise TypeError(str(e))
+            else:
+                try:
+                    features[x_key] = self.feature_typing_fn.x_fns[x_key]([f.net_x[x_key]])
+                except TypeError as e:
+                    raise TypeError(str(e))
+        for y_key in f.net_y:
+            if isinstance(f.net_y[y_key], list):
+                try:
+                    features[y_key] = self.feature_typing_fn.y_fns[y_key](f.net_y[y_key])
+                except TypeError as e:
+                    raise TypeError(str(e))
+            elif isinstance(f.net_y[y_key], np.ndarray):
+                try:
+                    features[y_key] = self.feature_typing_fn.y_fns[y_key](f.net_y[y_key].tolist())
+                except TypeError as e:
+                    raise TypeError(str(e))
+            else:
+                try:
+                    features[y_key] = self.feature_typing_fn.y_fns[y_key]([f.net_y[y_key]])
+                except TypeError as e:
+                    raise TypeError(str(e))
+        features["is_real_sample"] = self.feature_typing_fn.is_real_sample_fn([f.is_real_sample])
         return features
 
     def write(self, input_features: Union[InputFeatures, List[InputFeatures]], batch_size, num_of_data,
@@ -334,7 +305,7 @@ class TFRecordWrapper:
                 writer.close()
                 self.writer = None
         except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return num_of_data
 
     def __decode_record(self, record):
@@ -350,10 +321,10 @@ class TFRecordWrapper:
             for name in list(sample.keys()):
                 t = sample[name]
                 if t.dtype == tf.int64:
-                    t = tf.cast(t,tf.int32)
+                    t = tf.to_int32(t)
                 sample[name] = t
         except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return sample
 
     def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None):
@@ -380,10 +351,9 @@ class TFRecordWrapper:
                 tf_record = tf_record.batch(batch_size, drop_remainder)
             except:
                 tf_record = tf_record.batch(batch_size)
-            self._tf_record = tf_record
+            it = tf_record.make_initializable_iterator()
+            data = it.get_next()
+            iterator_init = it.initializer
         except:
-            raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-        return
-    
-    
-    
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
+        return tf_record, data, iterator_init

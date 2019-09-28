@@ -1,4 +1,3 @@
-from tfwrapper.base.baseNet import BaseNet
+#version for tensorflow 2.0
 from tfwrapper.base.dataWrapper import InputSample,InputFeatures,FeatureTypingFunctions,TFDataWrapper,TFRecordWrapper
 from tfwrapper.base.baseDataProcessor import BaseDataProcessor,MnistDataProcessor
-from tfwrapper.base.tfmodel import TFModel

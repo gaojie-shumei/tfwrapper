@@ -30,17 +30,23 @@ class BaseNet(object):
         self._parameters = vars
 
     def net(self, inputs):
-        outputs = inputs
-        if self.layers is not None:
-            if isinstance(self.layers, list):
-                for layer in self.layers:
-                    outputs = layer(outputs)
-            else:
-                outputs = self.layers(outputs)
+        try:
+            outputs = inputs
+            if self.layers is not None:
+                if isinstance(self.layers, list):
+                    for layer in self.layers:
+                        outputs = layer(outputs)
+                else:
+                    outputs = self.layers(outputs)
+        except:
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return outputs
 
     def __call__(self, inputs):
-        outputs = self.net(inputs)
-        self.parameters = tf.global_variables()
+        try:
+            outputs = self.net(inputs)
+            self.parameters = tf.global_variables()
+        except:
+            raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return outputs
 
