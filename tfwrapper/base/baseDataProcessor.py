@@ -4,7 +4,7 @@ class BaseDataProcessor:
     def __init__(self, features_typing_fn: FeatureTypingFunctions=None):
         self.features_typing_fn = features_typing_fn
 
-    def creat_samples(self,*args,**kwargs)->List[InputSample]:
+    def create_samples(self,*args,**kwargs)->List[InputSample]:
         '''
         the input_x,input_y of InputSample's key should be same to the self.features_typing_fn
         :param args:
@@ -46,7 +46,7 @@ class MnistDataProcessor(BaseDataProcessor):
             raise ValueError("class FeatureTypingFunctions:features_typing_fn should provide")
         super(MnistDataProcessor, self).__init__(features_typing_fn)
 
-    def creat_samples(self, xs,ys):
+    def create_samples(self, xs,ys):
         samples = []
         for index,(x,y) in enumerate(zip(xs,ys)):
             input_x = {"x": x}
