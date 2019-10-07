@@ -1,9 +1,7 @@
 import tensorflow as tf
-from typing import List, Union, Dict
-import collections
 import numpy as np
-import os
-
+import collections
+from typing import List, Union, Dict
 
 class InputSample:
     def __init__(self, guid, input_x: Dict, input_y: Dict=None):
@@ -229,7 +227,10 @@ class TFRecordWrapper:
                 try:
                     self.writer = tf.io.TFRecordWriter(self.file_path)
                 except:
-                    self.writer = tf.python_io.TFRecordWriter(self.file_path)
+                    try:
+                        self.writer = tf.python_io.TFRecordWriter(self.file_path)
+                    except:
+                        self.writer = None
             self.need_write = need_write
             self._tf_record = None
         except:
@@ -297,14 +298,17 @@ class TFRecordWrapper:
             if self.need_write:
                 pass
             else:
-                return num_of_data
+                return
             if num_parallel_calls is not None and num_parallel_calls > 0:
                 batch_size = batch_size * num_parallel_calls
             if self.writer is None:
                 try:
                     writer = tf.io.TFRecordWriter(self.file_path)
                 except:
-                    writer = tf.python_io.TFRecordWriter(self.file_path)
+                    try:
+                        writer = tf.python_io.TFRecordWriter(self.file_path)
+                    except:
+                        raise RuntimeError("can't create the TFRecord writer")
                 self.writer = writer
             else:
                 writer = self.writer
@@ -334,8 +338,10 @@ class TFRecordWrapper:
                 writer.close()
                 self.writer = None
         except:
+            if self.writer is not None:
+                self.writer = None
             raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-        return num_of_data
+        return
 
     def __decode_record(self, record):
         '''

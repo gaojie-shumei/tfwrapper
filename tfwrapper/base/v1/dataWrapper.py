@@ -1,8 +1,7 @@
 import tensorflow as tf
-from typing import List, Union, Dict
 import collections
 import numpy as np
-import os
+from typing import List, Union, Dict
 
 
 class InputSample:
@@ -214,7 +213,10 @@ class TFRecordWrapper:
             try:
                 self.writer = tf.io.TFRecordWriter(self.file_path)
             except:
-                self.writer = tf.python_io.TFRecordWriter(self.file_path)
+                try:
+                    self.writer = tf.python_io.TFRecordWriter(self.file_path)
+                except:
+                    self.writer = None
         self.need_write = need_write
 
     def __feature2dict(self, f):
@@ -268,14 +270,17 @@ class TFRecordWrapper:
             if self.need_write:
                 pass
             else:
-                return num_of_data
+                return
             if num_parallel_calls is not None and num_parallel_calls > 0:
                 batch_size = batch_size * num_parallel_calls
             if self.writer is None:
                 try:
                     writer = tf.io.TFRecordWriter(self.file_path)
                 except:
-                    writer = tf.python_io.TFRecordWriter(self.file_path)
+                    try:
+                        writer = tf.python_io.TFRecordWriter(self.file_path)
+                    except:
+                        raise RuntimeError("can't create TFRecord writer")
                 self.writer = writer
             else:
                 writer = self.writer
@@ -305,6 +310,7 @@ class TFRecordWrapper:
                 writer.close()
                 self.writer = None
         except:
+            self.writer = None
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return num_of_data
 

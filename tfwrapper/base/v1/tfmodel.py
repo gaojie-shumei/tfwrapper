@@ -146,20 +146,20 @@ class TFModel:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return sess,True
     
-    def __close_session(self, sess:tf.Session):
+    def __close_session(self, sess):
         try:
-            if sess is not None and isinstance(sess, tf.Session):
+            if sess is not None and (isinstance(sess, tf.Session) or isinstance(sess, tf.InteractiveSession)):
                 sess.close()
         except:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
     
-    def fit(self, sess: Union[tf.Session,tf.InteractiveSession], epoch: int, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
+    def fit(self, sess, epoch: int, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
             v_inputs_feed=None, v_outputs_feed=None, v_net_configs_feed=None, batch_size=64,return_outputs=False,
             show_result=True, start_save_model_epoch=None, model_name='model', tr_tf_dataset_init=None,
             v_tf_dataset_init=None, restore=True):
         '''
-
-        :param sess:  a tf.Session for train
+        
+        :param sess:  a tf.Session for train  type  Union[tf.Session,tf.InteractiveSession]
         :param epoch: the train num
         :param tr_inputs_feed:  train inputs feed value with the same sort in self.inputs
         :param tr_outputs_feed:  train standard outputs feed value with the same sort in self.standard_outputs
@@ -250,13 +250,13 @@ class TFModel:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return results
 
-    def batch_fit(self, sess: tf.Session, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
+    def batch_fit(self, sess, tr_inputs_feed, tr_outputs_feed, tr_net_configs_feed=None,
                   v_inputs_feed=None, v_outputs_feed=None, v_net_configs_feed=None, batch_size=64,
                   return_outputs=False, do_validation=False, save_model=False, model_name='model',
                   v_tf_dataset_init=None, restore=True):
         '''
 
-        :param sess:  a tf.Session for train
+        :param sess:  a tf.Session for train  type  Union[tf.Session,tf.InteractiveSession]
         :param tr_inputs_feed:  train inputs feed value with the same sort in self.inputs
         :param tr_outputs_feed:  train standard outputs feed value with the same sort in self.standard_outputs
         :param tr_net_configs_feed:  train net configs feed value with the same sort in self.net_configs
@@ -383,10 +383,10 @@ class TFModel:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return result
 
-    def evaluation(self, sess: tf.Session, test_inputs_feed, test_outputs_feed, test_net_configs_feed=None,
+    def evaluation(self, sess, test_inputs_feed, test_outputs_feed, test_net_configs_feed=None,
                    batch_size=64, is_in_train=False, return_outputs=False, test_tf_dataset_init=None):
         '''
-        :param sess: tf.Session for test
+        :param sess: tf.Session for test  type  Union[tf.Session,tf.InteractiveSession]
         :param test_inputs_feed: same to batch_fit function's parameter of tr_inputs_feed
         :param test_outputs_feed:  same to batch_fit function's parameter of tr_outputs_feed
         :param test_net_configs_feed:  same to batch_fit function's parameter of tr_net_configs_feed
@@ -480,10 +480,10 @@ class TFModel:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return result
 
-    def predict(self, sess: tf.Session, inputs_feed, net_configs_feed=None, batch_size=64, is_in_train=False,
+    def predict(self, sess, inputs_feed, net_configs_feed=None, batch_size=64, is_in_train=False,
                 tf_dataset_init=None):
         '''
-        :param sess: tf.Session
+        :param sess: tf.Session  type  Union[tf.Session,tf.InteractiveSession]
         :param inputs_feed: same to batch_fit function's parameter of tr_inputs_feed
         :param net_configs_feed: same to batch_fit function's parameter of tr_net_configs_feed
         :param batch_size: batch size
