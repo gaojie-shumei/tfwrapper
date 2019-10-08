@@ -191,7 +191,7 @@ class TFDataWrapper:
             self._tf_data = tf_data
         except:
             raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-        return
+        return tf_data
 
     def __call__(self, all_features: List[InputFeatures], batch_size, is_train=True,
                  drop_remainder=False, num_parallel_calls=None):
@@ -204,7 +204,7 @@ class TFDataWrapper:
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
-        self.wrapper(all_features, batch_size, is_train, drop_remainder,num_parallel_calls)
+        return self.wrapper(all_features, batch_size, is_train, drop_remainder,num_parallel_calls)
     
     
 
@@ -238,7 +238,7 @@ class TFRecordWrapper:
     
     def iter(self):
         try:
-            if self._tf_data is None:
+            if self._tf_record is None:
                 raise RuntimeError("NoneType can't iter")
             return iter(self._tf_record)
         except:
@@ -389,7 +389,7 @@ class TFRecordWrapper:
             self._tf_record = tf_record
         except:
             raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
-        return
+        return tf_record
     
     
     

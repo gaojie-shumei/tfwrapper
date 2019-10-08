@@ -312,7 +312,7 @@ class TFRecordWrapper:
         except:
             self.writer = None
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
-        return num_of_data
+        return 
 
     def __decode_record(self, record):
         '''
