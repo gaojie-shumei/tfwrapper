@@ -102,9 +102,9 @@ def train(x_train,y_train,x_test,y_test,train_num,learning_rate,batch_size):
     try:
         with tf.device("/cpu:0"):
             mnist_data_processor = baseDataProcessor.MnistDataProcessor()
-            train_samples = mnist_data_processor.creat_samples(x_train,y_train)
+            train_samples = mnist_data_processor.create_samples(x_train,y_train)
             train_features = mnist_data_processor.samples2features(train_samples)
-            test_samples = mnist_data_processor.creat_samples(x_test, y_test)
+            test_samples = mnist_data_processor.create_samples(x_test, y_test)
             test_features = mnist_data_processor.samples2features(test_samples)
             wrapper = TFDataWrapper()
             _, train_data, train_init = wrapper(train_features, batch_size, is_train=True, drop_remainder=False,

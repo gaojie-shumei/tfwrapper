@@ -27,13 +27,14 @@ def compute(x,y,model):
 
 def train(x_train, y_train, x_test, y_test, train_num=100, learning_rate=0.0005, batch_size=128):
     mnist_data_processor = baseDataProcessor.MnistDataProcessor()
-    train_samples = mnist_data_processor.creat_samples(x_train,y_train)
+    train_samples = mnist_data_processor.create_samples(x_train,y_train)
     train_features = mnist_data_processor.samples2features(train_samples)
-    test_samples = mnist_data_processor.creat_samples(x_test, y_test)
+    test_samples = mnist_data_processor.create_samples(x_test, y_test)
     test_features = mnist_data_processor.samples2features(test_samples)
     tr_wrapper,t_wrapper = TFDataWrapper(),TFDataWrapper()
-    tr_wrapper(train_features, batch_size, is_train=True, drop_remainder=False,num_parallel_calls=1)
-    t_wrapper(test_features, batch_size, is_train=False, drop_remainder=False,num_parallel_calls=1)
+    tr_dataset = tr_wrapper(train_features, batch_size, is_train=True, drop_remainder=False,num_parallel_calls=1)
+    t_dataset = t_wrapper(test_features, batch_size, is_train=False, drop_remainder=False,num_parallel_calls=1)
+    print(tr_dataset)
     optimizer = keras.optimizers.Adam(learning_rate)
     model = create_model()
     for i in range(train_num):
