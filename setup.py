@@ -4,34 +4,10 @@ Created on 2019年9月17日
 @author: gaojie-202
 '''
 import setuptools
-# setuptools.setup(
-#     name = "tfwrapper",
-#     version = "2.0",
-#     description = "This is a wrapper for tensorflow",
-#     author = "Jie Gao",
-#     maintainer = "Jie Gao",
-#     author_email = "gaojiexcq@163.com",
-#     maintainer_email = "gaojiexcq@163.com",
-#     url = "https://github.com/gjxcq/tfwrapper",
-#     packages = setuptools.find_packages(exclude=("extendNet")),
-#     platforms = "python3",
-#     download_url = "https://github.com/gjxcq/tfwrapper",
-#     install_requires = [
-#         "tensorflow",
-#         "gensim<=3.6.0",
-#         "numpy"
-#     ],
-#     requires = [
-#         "tensorflow",
-#         "gensim",
-#         "numpy"
-#     ],
-#     license = "MIT"
-# )
 setuptools.setup(
-    name = "tfwrapper-gpu",
-    version = "2.0",
-    description = "This is a wrapper for tensorflow",
+    name = "tfwrapper",
+    version = "2.0.1",
+    description = "This is a wrapper for tensorflow, the shuffle buffer size changed",
     author = "Jie Gao",
     maintainer = "Jie Gao",
     author_email = "gaojiexcq@163.com",
@@ -41,7 +17,7 @@ setuptools.setup(
     platforms = "python3",
     download_url = "https://github.com/gjxcq/tfwrapper",
     install_requires = [
-        "tensorflow-gpu",
+        "tensorflow",
         "gensim<=3.6.0",
         "numpy"
     ],
@@ -52,3 +28,27 @@ setuptools.setup(
     ],
     license = "MIT"
 )
+# setuptools.setup(
+#     name = "tfwrapper-gpu",
+#     version = "2.0.1",
+#     description = "This is a wrapper for tensorflow, the shuffle buffer size changed",
+#     author = "Jie Gao",
+#     maintainer = "Jie Gao",
+#     author_email = "gaojiexcq@163.com",
+#     maintainer_email = "gaojiexcq@163.com",
+#     url = "https://github.com/gjxcq/tfwrapper",
+#     packages = setuptools.find_packages(exclude=("extendNet")),
+#     platforms = "python3",
+#     download_url = "https://github.com/gjxcq/tfwrapper",
+#     install_requires = [
+#         "tensorflow-gpu",
+#         "gensim<=3.6.0",
+#         "numpy"
+#     ],
+#     requires = [
+#         "tensorflow",
+#         "gensim",
+#         "numpy"
+#     ],
+#     license = "MIT"
+# )

@@ -179,7 +179,7 @@ class TFDataWrapper:
             tf_data = tf.data.Dataset.from_tensor_slices(net_data)
             if is_train:
                 # tf_data = tf_data.repeat()
-                tf_data = tf_data.shuffle(buffer_size=100)
+                tf_data = tf_data.shuffle(buffer_size=(len(all_features) + res))
             try:
                 tf_data = tf_data.map(lambda x: x, num_parallel_calls)
             except:
@@ -362,12 +362,13 @@ class TFRecordWrapper:
             raise RuntimeError("tensorflow version must be more than 2,such as 2.0.0rc1")
         return sample
 
-    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None):
+    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None,buffer_size=10000000000000000000000):
         '''
         :param is_train: is train set or not,if is train set, it will be repeat and shuffle
         :param batch_size: batch size for cpu or one GPU
         :param drop_remainder:  if the set is less than batch_size or batch_size*gpu_num,drop it or not
         :param num_parallel_calls: the data process with thread,if None,one thread
+        :param buffer_size: the shuffle buffer size, it bigger than the data num for the best effect
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
@@ -377,7 +378,7 @@ class TFRecordWrapper:
             tf_record = tf.data.TFRecordDataset(self.file_path)
             if is_train:
                 # tf_record = tf_record.repeat()
-                tf_record = tf_record.shuffle(buffer_size=100)
+                tf_record = tf_record.shuffle(buffer_size=buffer_size)
             try:
                 tf_record = tf_record.map(lambda record: self.__decode_record(record), num_parallel_calls)
             except:
