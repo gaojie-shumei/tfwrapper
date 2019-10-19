@@ -333,7 +333,7 @@ class TFRecordWrapper:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return sample
 
-    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None,buffer_size=10000000000000000000000):
+    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None,buffer_size=1000000000):
         '''
         :param is_train: is train set or not,if is train set, it will be repeat and shuffle
         :param batch_size: batch size for cpu or one GPU
