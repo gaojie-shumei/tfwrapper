@@ -6,8 +6,8 @@ Created on 2019年9月17日
 import setuptools
 # setuptools.setup(
 #     name = "tfwrapper",
-#     version = "2.0.1",
-#     description = "This is a wrapper for tensorflow, the shuffle buffer size changed",
+#     version = "2.0.2",
+#     description = "This is a wrapper for tensorflow, the word2vecUtil add method window_format",
 #     author = "Jie Gao",
 #     maintainer = "Jie Gao",
 #     author_email = "gaojiexcq@163.com",
@@ -30,8 +30,8 @@ import setuptools
 # )
 setuptools.setup(
     name = "tfwrapper-gpu",
-    version = "2.0.1",
-    description = "This is a wrapper for tensorflow, the shuffle buffer size changed",
+    version = "2.0.2",
+    description = "This is a wrapper for tensorflow, the word2vecUtil add method window_format",
     author = "Jie Gao",
     maintainer = "Jie Gao",
     author_email = "gaojiexcq@163.com",
