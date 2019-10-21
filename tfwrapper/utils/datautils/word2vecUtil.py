@@ -4,6 +4,8 @@ import numpy as np
 import random
 import os.path as ospath
 import os
+
+
 class Word2vecUtil:
     def __init__(self, pad_word="<pad>",word2vec_path="word2vecmodel",word2vec_model:[dict]=None):
         '''
@@ -16,8 +18,16 @@ class Word2vecUtil:
         self.word2vec_model = word2vec_model  
     
     def generator_batch(self, batch_size, data_x, data_y=None, shuffle=False,num_parallel_calls=0):
+        '''
+        the batch data generator
+        :param batch_size: batch size
+        :param data_x: the data
+        :param data_y: the result
+        :param shuffle: if True, shuffle, False for not shuffle
+        :param num_parallel_calls: if not None and bigger than 0, the batch_size should be multiply this,the type is int 
+        '''
         position = 0
-        if num_parallel_calls > 0:
+        if num_parallel_calls > 0 and num_parallel_calls is not None:
             batch_size = batch_size * num_parallel_calls
         length = self.__type2len(data_x)
         while position < length:
@@ -38,19 +48,8 @@ class Word2vecUtil:
                 data_y = self.__type2concat(data_y[0:position], temp_y)
             if position + batch_size > length:
                 batch_x = data_x[position:]
-                batch_len = self.__type2len(data_x[position:])
                 if data_y is not None:
                     batch_y = data_y[position:]
-                res = batch_size - self.__type2len(data_x[position:])
-                while res >= length:
-                    batch_x = self.__type2concat(batch_x, data_x)
-                    if data_y is not None:
-                        batch_y = self.__type2concat(batch_y, data_y)
-                    res -= length
-                if res > 0:
-                    batch_x = self.__type2concat(batch_x, data_x[0:res])
-                    if data_y is not None:
-                        batch_y = self.__type2concat(batch_y, data_y[0:res])
             else:
                 batch_x = data_x[position:position+batch_size]
                 if data_y is not None:
@@ -59,7 +58,7 @@ class Word2vecUtil:
             position += batch_size
             if position >length:
                 is_one_epoch = True
-            yield (batch_x, batch_y, batch_len, is_one_epoch)
+            yield (batch_x, batch_y, is_one_epoch)
             
     @staticmethod        
     def __type2shuffle(data, shuffle_index):
@@ -109,6 +108,13 @@ class Word2vecUtil:
     batch_data :二维数组  str
     '''
     def padding(self, batch_data: list, batch_y_data: list=None, max_length=None, limit_len=512):
+        '''
+        padding the data to the same timesteps,for net compute
+        :param batch_data: the char data with list,size is [batch,??]
+        :param batch_y_data: the label or result for batch_data, if not None, size can be [batch],[batch,??]
+        :param max_length: the timestep max length, if not None and less than limit_len,will padding to max_length
+        :param limit_len: the timestep limit_len, the timestep can't bigger than limit_len
+        '''
         pad_word = self.pad_word
         max_len = 0
         actual_lengths = []
@@ -136,11 +142,14 @@ class Word2vecUtil:
         actual_lengths = np.array(actual_lengths)
         return pad_data, pad_y_data, actual_lengths
     
-    '''
-    pad_data:二维数组 str
-    '''
-    def format(self,pad_data:list,pad_y_data:list=None):
+    def format(self,pad_data:list,pad_y_data:list=None,zero_padding=True):
+        '''
+        :param pad_data: the char data with padding   the size is [batch,max_len], the element type is str
+        :param pad_y_data: the label for pad_data,can be None,if exists the size can be [batch],[batch,max_len],[batch,max_len,num_classes]
+        :param zero_padding: if True use 0 for pad_word, False,use the word2vec model padding vector
+        '''
         batch_x = []
+        pad_word = self.pad_word
         if pad_y_data is not None:
             batch_y = []
         else:
@@ -155,7 +164,12 @@ class Word2vecUtil:
             for i in range(len(pad_data)):
                 x, y = [], []
                 for j in range(len(pad_data[i])):
-                    x.append(word2vec_model[pad_data[i][j]])
+                    if pad_data[i][j]==pad_word and zero_padding:
+                        w2v = np.array(word2vec_model[pad_data[i][j]])
+                        w2v = np.zeros(shape=w2v.shape)
+                        x.append(w2v)
+                    else:
+                        x.append(word2vec_model[pad_data[i][j]])
                     if pad_y_data is not None:
                         y.append(self.label_setlist.index(pad_y_data[i][j]))
                 batch_x.append(np.array(x))
@@ -163,38 +177,142 @@ class Word2vecUtil:
                     batch_y.append(np.array(y))
             batch_x = np.array(batch_x)
             if batch_y is not None:
-                batch_y = np.array(batch_y).astype(np.int32)
+                batch_y = np.array(batch_y)
+        else:
+            raise RuntimeError("the word2vec model not find, can't convert the str to vector")
         return batch_x,batch_y
-
+    
+    def __window_merge(self,data1:np.ndarray,data2:np.ndarray,merge_mode="concat"):
+        '''
+        window merge
+        :param data1: a np.ndarray size is [hidden_size],the batch is 1,the timestep is 1
+        :param data2: a np.ndarray size is [hidden_size],the batch is 1,the timestep is 1
+        :param merge_mode: the mode for merge, only support 'concat','avg','sum'
+        '''
+        data = None
+        mode = ["concat","avg","sum"]
+        if merge_mode not in mode:
+            raise RuntimeError("the merge_mode is invalid")
+        if merge_mode=="concat":
+            data = np.array(data1.tolist()+data2.tolist())
+        elif merge_mode=="avg" or merge_mode=="sum":
+            data = data1 + data2
+        return data
+    
+    def window_format(self,pad_data:list,window:int=1,pad_y_data:list=None,zero_padding=True,merge_mode="concat"):
+        '''
+        :param pad_data: the char data with padding   the size is [batch,max_len], the element type is str
+        :param window: the window num data for merge, it is best to set it with an odd number,
+                       if current timestep is i,the window timestep is [i - (window-1)/2~i + (window-1)/2],
+                       if the timestep is negtive or more than the max_len, it will be set with zero vector
+        :param pad_y_data: the label for pad_data
+        :param zero_padding: if True use 0 for pad_word, False,use the word2vec model padding vector
+        :param merge_mode: the mode for merge, only support 'concat','avg','sum'
+        '''
+        mode = ["concat","avg","sum"]
+        batch_x = []
+        pad_word = self.pad_word
+        if pad_y_data is not None:
+            batch_y = []
+        else:
+            batch_y = None
+        word2vec_model = self.word2vec_model
+        if word2vec_model is None:
+            try:
+                word2vec_model = self.word2vec()
+            except:
+                raise RuntimeError("the word2vec model not find, can't convert the str to vector")
+        if word2vec_model is not None:
+            if not isinstance(window, int) or window < 1:
+                raise RuntimeError("window parameter is invalid")
+            if window > 1:
+                if merge_mode not in mode:
+                    raise RuntimeError("the merge_mode is invalid")
+            n = (window - 1)//2
+            res = window - 1 - n
+            for i in range(len(pad_data)):
+                x, y = [], []
+                for j in range(len(pad_data[i])):
+                    w2v = np.array(word2vec_model[pad_data[i][j]])
+                    shape = w2v.shape
+                    if pad_data[i][j]==pad_word and zero_padding:
+                        w2v = np.zeros(shape=shape)
+                    for k in range(n,0,-1):
+                        if j-k < 0:
+                            if not zero_padding:
+                                w2v = self.__window_merge(word2vec_model[pad_word],w2v, merge_mode)
+                            else:
+                                w2v = self.__window_merge(np.zeros(shape=shape),w2v, merge_mode)
+                        else:
+                            if pad_data[i][j-k] == pad_word and zero_padding:
+                                w2v = self.__window_merge(np.zeros(shape=shape), w2v, merge_mode)
+                            else:
+                                w2v = self.__window_merge(word2vec_model[pad_data[i][j-k]],w2v, merge_mode)
+                    for k in range(1,res+1):
+                        if j+k >= len(pad_data[i]):
+                            if not zero_padding:
+                                w2v = self.__window_merge(word2vec_model[pad_word],w2v, merge_mode)
+                            else:
+                                w2v = self.__window_merge(np.zeros(shape=shape),w2v, merge_mode)
+                        else:
+                            if pad_data[i][j+k] == pad_word and zero_padding:
+                                w2v = self.__window_merge(w2v,np.zeros(shape=shape), merge_mode)
+                            else:
+                                w2v = self.__window_merge(w2v,word2vec_model[pad_data[i][j+k]], merge_mode)
+                    if merge_mode=="avg":
+                        w2v = w2v / window
+                    x.append(w2v)
+                    if pad_y_data is not None:
+                        y.append(self.label_setlist.index(pad_y_data[i][j]))
+                batch_x.append(np.array(x))
+                if batch_y is not None:
+                    batch_y.append(np.array(y))
+            batch_x = np.array(batch_x)
+            if batch_y is not None:
+                batch_y = np.array(batch_y)
+        else:
+            raise RuntimeError("the word2vec model not find, can't convert the str to vector")
+            
+        return batch_x,batch_y
+    
     def set_mask(self,batch_x:np.ndarray,actual_lengths:np.ndarray=None,mask=0):
+        '''
+        when the padding data in batch_x is not mask value padding and know the actual timestep lengths for each x,
+        can use this method to change it
+        :param batch_x: the net input data
+        :param actual_lengths: the timestep length for batch_x
+        :param mask: the value for mask, use in net for no compute
+        '''
         if actual_lengths is None:
             return batch_x
         else:
             for i in range(actual_lengths.shape[0]):
                 batch_x[i,actual_lengths[i]:] = mask
         return batch_x
-    '''
-    sentences：可以是一个·ist，对于大语料集，建议使用BrownCorpus,Text8Corpus或·ineSentence构建。
-    ·  sg： 用于设置训练算法，默认为0，对应CBOW算法；sg=1则采用skip-gram算法。
-    ·  size：是指特征向量的维度，默认为100。大的size需要更多的训练数据,但是效果会更好. 推荐值为几十到几百。
-    ·  window：表示当前词与预测词在一个句子中的最大距离是多少
-    ·  alpha: 是学习速率
-    ·  seed：用于随机数发生器。与初始化词向量有关。
-    ·  min_count: 可以对字典做截断. 词频少于min_count次数的单词会被丢弃掉, 默认值为5
-    ·  max_vocab_size: 设置词向量构建期间的RAM限制。如果所有独立单词个数超过这个，则就消除掉其中最不频繁的一个。每一千万个单词需要大约1GB的RAM。设置成None则没有限制。
-    ·  sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)
-    ·  workers参数控制训练的并行数。
-    ·  hs: 如果为1则会采用hierarchica·softmax技巧。如果设置为0（defau·t），则negative sampling会被使用。
-    ·  negative: 如果>0,则会采用negativesamp·ing，用于设置多少个noise words
-    ·  cbow_mean: 如果为0，则采用上下文词向量的和，如果为1（defau·t）则采用均值。只有使用CBOW的时候才起作用。
-    ·  hashfxn： hash函数来初始化权重。默认使用python的hash函数
-    ·  iter： 迭代次数，默认为5
-    ·  trim_rule： 用于设置词汇表的整理规则，指定那些单词要留下，哪些要被删除。可以设置为None（min_count会被使用）或者一个接受()并返回RU·E_DISCARD,uti·s.RU·E_KEEP或者uti·s.RU·E_DEFAU·T的函数。
-    ·  sorted_vocab： 如果为1（defau·t），则在分配word index 的时候会先对单词基于频率降序排序。
-    ·  batch_words：每一批的传递给线程的单词的数量，默认为10000
-    '''
+    
+    
     def word2vec(self, sentences=None, size=128, alpha=0.025, window=5, min_count=5,max_vocab_size=None, sample=1e-3,
                  seed=1, workers=3, min_alpha=0.0001,sg=0, hs=0, negative=5, cbow_mean=1, iter=5,name="data.model"):
+        '''
+        sentences：可以是一个·ist，对于大语料集，建议使用BrownCorpus,Text8Corpus或·ineSentence构建。
+        ·  sg： 用于设置训练算法，默认为0，对应CBOW算法；sg=1则采用skip-gram算法。
+        ·  size：是指特征向量的维度，默认为100。大的size需要更多的训练数据,但是效果会更好. 推荐值为几十到几百。
+        ·  window：表示当前词与预测词在一个句子中的最大距离是多少
+        ·  alpha: 是学习速率
+        ·  seed：用于随机数发生器。与初始化词向量有关。
+        ·  min_count: 可以对字典做截断. 词频少于min_count次数的单词会被丢弃掉, 默认值为5
+        ·  max_vocab_size: 设置词向量构建期间的RAM限制。如果所有独立单词个数超过这个，则就消除掉其中最不频繁的一个。每一千万个单词需要大约1GB的RAM。设置成None则没有限制。
+        ·  sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)
+        ·  workers参数控制训练的并行数。
+        ·  hs: 如果为1则会采用hierarchica·softmax技巧。如果设置为0（defau·t），则negative sampling会被使用。
+        ·  negative: 如果>0,则会采用negativesamp·ing，用于设置多少个noise words
+        ·  cbow_mean: 如果为0，则采用上下文词向量的和，如果为1（defau·t）则采用均值。只有使用CBOW的时候才起作用。
+        ·  hashfxn： hash函数来初始化权重。默认使用python的hash函数
+        ·  iter： 迭代次数，默认为5
+        ·  trim_rule： 用于设置词汇表的整理规则，指定那些单词要留下，哪些要被删除。可以设置为None（min_count会被使用）或者一个接受()并返回RU·E_DISCARD,uti·s.RU·E_KEEP或者uti·s.RU·E_DEFAU·T的函数。
+        ·  sorted_vocab： 如果为1（defau·t），则在分配word index 的时候会先对单词基于频率降序排序。
+        ·  batch_words：每一批的传递给线程的单词的数量，默认为10000
+        '''
         if sentences is not None:
             if isinstance(sentences,list)==False:
                 sentences = list(sentences)
