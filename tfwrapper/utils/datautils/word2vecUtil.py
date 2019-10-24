@@ -127,8 +127,11 @@ class Word2vecUtil:
             if len(batch_data[i])>max_len:
                 max_len = len(batch_data[i])
             actual_lengths.append(len(batch_data[i]))
-        pad_data = batch_data
-        pad_y_data = batch_y_data
+        pad_data = list(batch_data)
+        if batch_y_data is not None:
+            pad_y_data = list(batch_y_data)
+        else:
+            pad_y_data = None
         if max_length is not None:
             max_len = max_length
         if max_len > limit_len:
@@ -233,8 +236,8 @@ class Word2vecUtil:
             if window > 1:
                 if merge_mode not in mode:
                     raise RuntimeError("the merge_mode is invalid")
-            n = (window - 1)//2
-            res = window - 1 - n
+            res = (window - 1)//2
+            n = window - 1 - res
             for i in range(len(pad_data)):
                 x, y = [], []
                 for j in range(len(pad_data[i])):
