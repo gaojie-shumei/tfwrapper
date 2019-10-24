@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import collections
 from typing import List, Union, Dict
+import os
 
 class InputSample:
     def __init__(self, guid, input_x: Dict, input_y: Dict=None):
@@ -219,6 +220,8 @@ class TFRecordWrapper:
             if file_path is None or file_path == "":
                 raise ValueError("the file_path should provide")
             else:
+                if not os.path.exists(os.path.dirname(file_path)) and os.path.dirname(file_path)!="":
+                    os.makedirs(os.path.dirname(file_path))
                 self.file_path = file_path
             if feature_typing_fn is None:
                 raise ValueError("feature_typing_fn should provide")

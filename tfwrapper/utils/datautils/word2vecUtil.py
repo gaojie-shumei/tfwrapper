@@ -7,17 +7,21 @@ import os
 
 
 class Word2vecUtil:
-    def __init__(self, pad_word="<pad>",word2vec_path="word2vecmodel",word2vec_model:[dict]=None):
+    def __init__(self, pad_word="<pad>",label_setlist=None,word2vec_path="word2vecmodel",word2vec_model:[dict]=None):
         '''
         :param pad_word: use for padding data,if the data is need padding,use this to pad
+        :param label_setlist: the classes labels
         :param word2vec_path: the word2vec_model store path
         :param word2vec_model: the word2vec_model
         '''
         self.pad_word = pad_word
         self.word2vec_path = word2vec_path
-        self.word2vec_model = word2vec_model  
+        self.word2vec_model = word2vec_model
+        if label_setlist is not None and pad_word not in label_setlist:
+            label_setlist = [pad_word] + label_setlist
+        self.label_setlist = label_setlist
     
-    def generator_batch(self, batch_size, data_x, data_y=None, shuffle=False,num_parallel_calls=0):
+    def generator_batch(self, batch_size, data_x, data_y=None, shuffle=False,num_parallel_calls=0,random_state=2):
         '''
         the batch data generator
         :param batch_size: batch size
@@ -39,6 +43,7 @@ class Word2vecUtil:
                 temp_y = data_y[position:]
             if shuffle:
                 temp_x_len = self.__type2len(temp_x)
+                random.seed(random_state)
                 shuffle_index = random.sample(range(temp_x_len),temp_x_len)
                 temp_x = self.__type2shuffle(temp_x, shuffle_index)
                 if data_y is not None:
@@ -321,7 +326,9 @@ class Word2vecUtil:
             if self.word2vec_model is not None:
                 model = self.word2vec_model
             else:
-                model = Word2Vec.load(self.word2vec_path+"/"+name)
+                model = Word2Vec.load(os.path.join(self.word2vec_path,name))
+                if model.vector_size != size:
+                    raise RuntimeError("word2vec size not match")
             if sentences is not None:
                 flag = 0
                 sentences_set = set(list(itertools.chain.from_iterable(sentences)))
@@ -344,7 +351,7 @@ class Word2vecUtil:
                 raise RuntimeError("sentences is None and model not exists!")
         if self.word2vec_path is not None and self.word2vec_path!="":
             if ospath.exists(self.word2vec_path)==False:
-                os.mkdir(self.word2vec_path)
-            model.save(self.word2vec_path+"/"+name)
+                os.makedirs(self.word2vec_path)
+            model.save(os.path.join(self.word2vec_path,name))
         self.word2vec_model = model
         return model

@@ -23,6 +23,39 @@ class BaseDataProcessor:
         '''
         raise NotImplementedError
 
+class GeneralDataProcessor(BaseDataProcessor):
+    def __init__(self,input_size:int,output_size:int=None):
+        if input_size is None:
+            raise RuntimeError("input size should be provided")
+        input_size = [input_size,]
+        if output_size is None:
+            output_size = []
+        else:
+            output_size = [output_size,]
+        x_fns = {"x":FeatureTypingFunctions.float_feature}
+        name_to_features = {
+            "x":tf.io.FixedLenFeature(shape=input_size,dtype="float"),
+            "y":tf.io.FixedLenFeature(shape=output_size,dtype=tf.int64),
+            "is_real_sample":tf.io.FixedLenFeature(shape=[],dtype=tf.int64)
+        }
+        y_fns = {"y":FeatureTypingFunctions.int64_feature}
+        feature_typing_fn = FeatureTypingFunctions(x_fns=x_fns,name_to_features=name_to_features,y_fns=y_fns)
+        super(GeneralDataProcessor, self).__init__(feature_typing_fn)
+    
+    def create_samples(self, xs,ys):
+        samples = []
+        for guid,(x,y) in enumerate(zip(xs,ys)):
+            sample = InputSample(guid=guid,input_x={"x":x},input_y={"y":y})
+            samples.append(sample)
+        return samples
+    
+    def samples2features(self, samples):
+        features = []
+        for sample in samples:
+            feature = InputFeatures(net_x=sample.input_x,net_y=sample.input_y)
+            features.append(feature)
+        return features
+
 
 class MnistDataProcessor(BaseDataProcessor):
     def __init__(self, features_typing_fn: FeatureTypingFunctions=None):
