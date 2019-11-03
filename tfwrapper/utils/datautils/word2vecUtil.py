@@ -7,15 +7,17 @@ import os
 
 
 class Word2vecUtil:
-    def __init__(self, pad_word="<pad>",label_setlist=None,word2vec_path="word2vecmodel",word2vec_model:[dict]=None):
+    def __init__(self, word2vec_path, word2vec_model_name="data.model",pad_word="<pad>",label_setlist=None,word2vec_model:dict=None):
         '''
+        :param word2vec_path: the word2vec_model store path
+        :param word2vec_model_name: word2vec model name
         :param pad_word: use for padding data,if the data is need padding,use this to pad
         :param label_setlist: the classes labels
-        :param word2vec_path: the word2vec_model store path
         :param word2vec_model: the word2vec_model
         '''
         self.pad_word = pad_word
         self.word2vec_path = word2vec_path
+        self.word2vec_model_name = word2vec_model_name
         self.word2vec_model = word2vec_model
         if label_setlist is not None and pad_word not in label_setlist:
             label_setlist = [pad_word] + label_setlist
@@ -150,7 +152,7 @@ class Word2vecUtil:
         actual_lengths = np.array(actual_lengths)
         return pad_data, pad_y_data, actual_lengths
     
-    def format(self,pad_data:list,pad_y_data:list=None,zero_padding=True):
+    def format(self,pad_data:list,pad_y_data:list=None,zero_padding=True,word2vec_model=None):
         '''
         :param pad_data: the char data with padding   the size is [batch,max_len], the element type is str
         :param pad_y_data: the label for pad_data,can be None,if exists the size can be [batch],[batch,max_len],[batch,max_len,num_classes]
@@ -162,7 +164,8 @@ class Word2vecUtil:
             batch_y = []
         else:
             batch_y = None
-        word2vec_model = self.word2vec_model
+        if word2vec_model is None:
+            word2vec_model = self.word2vec_model
         if word2vec_model is None:
             try:
                 word2vec_model = self.word2vec()
@@ -207,7 +210,7 @@ class Word2vecUtil:
             data = data1 + data2
         return data
     
-    def window_format(self,pad_data:list,window:int=1,pad_y_data:list=None,zero_padding=True,merge_mode="concat"):
+    def window_format(self,pad_data:list,window:int=1,pad_y_data:list=None,zero_padding=True,merge_mode="concat",word2vec_model=None):
         '''
         :param pad_data: the char data with padding   the size is [batch,max_len], the element type is str
         :param window: the window num data for merge, it is best to set it with an odd number,
@@ -224,7 +227,8 @@ class Word2vecUtil:
             batch_y = []
         else:
             batch_y = None
-        word2vec_model = self.word2vec_model
+        if word2vec_model is None:
+            word2vec_model = self.word2vec_model
         if word2vec_model is None:
             try:
                 word2vec_model = self.word2vec()
@@ -298,29 +302,44 @@ class Word2vecUtil:
                 batch_x[i,actual_lengths[i]:] = mask
         return batch_x
     
+    def load_word2vec_model(self,name=None):
+        '''
+        :param name: word2vec model name
+        '''
+        if name is None:
+            name = self.word2vec_model_name
+        try:
+            model = Word2Vec.load(os.path.join(self.word2vec_path,name))
+            self.word2vec_model = model
+        except:
+            raise RuntimeError("the word2vec model not exists")
+        return model
     
     def word2vec(self, sentences=None, size=128, alpha=0.025, window=5, min_count=5,max_vocab_size=None, sample=1e-3,
-                 seed=1, workers=3, min_alpha=0.0001,sg=0, hs=0, negative=5, cbow_mean=1, iter=5,name="data.model"):
+                 seed=1, workers=3, min_alpha=0.0001,sg=0, hs=0, negative=5, cbow_mean=1, iter=5,name=None):
         '''
-        sentences：可以是一个·ist，对于大语料集，建议使用BrownCorpus,Text8Corpus或·ineSentence构建。
-        ·  sg： 用于设置训练算法，默认为0，对应CBOW算法；sg=1则采用skip-gram算法。
-        ·  size：是指特征向量的维度，默认为100。大的size需要更多的训练数据,但是效果会更好. 推荐值为几十到几百。
-        ·  window：表示当前词与预测词在一个句子中的最大距离是多少
-        ·  alpha: 是学习速率
-        ·  seed：用于随机数发生器。与初始化词向量有关。
-        ·  min_count: 可以对字典做截断. 词频少于min_count次数的单词会被丢弃掉, 默认值为5
-        ·  max_vocab_size: 设置词向量构建期间的RAM限制。如果所有独立单词个数超过这个，则就消除掉其中最不频繁的一个。每一千万个单词需要大约1GB的RAM。设置成None则没有限制。
-        ·  sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)
-        ·  workers参数控制训练的并行数。
-        ·  hs: 如果为1则会采用hierarchica·softmax技巧。如果设置为0（defau·t），则negative sampling会被使用。
-        ·  negative: 如果>0,则会采用negativesamp·ing，用于设置多少个noise words
-        ·  cbow_mean: 如果为0，则采用上下文词向量的和，如果为1（defau·t）则采用均值。只有使用CBOW的时候才起作用。
-        ·  hashfxn： hash函数来初始化权重。默认使用python的hash函数
-        ·  iter： 迭代次数，默认为5
-        ·  trim_rule： 用于设置词汇表的整理规则，指定那些单词要留下，哪些要被删除。可以设置为None（min_count会被使用）或者一个接受()并返回RU·E_DISCARD,uti·s.RU·E_KEEP或者uti·s.RU·E_DEFAU·T的函数。
-        ·  sorted_vocab： 如果为1（defau·t），则在分配word index 的时候会先对单词基于频率降序排序。
-        ·  batch_words：每一批的传递给线程的单词的数量，默认为10000
+        :param sentences：可以是一个·ist，对于大语料集，建议使用BrownCorpus,Text8Corpus或·ineSentence构建。
+        :param sg： 用于设置训练算法，默认为0，对应CBOW算法；sg=1则采用skip-gram算法。
+        :param size：是指特征向量的维度，默认为100。大的size需要更多的训练数据,但是效果会更好. 推荐值为几十到几百。
+        :param window：表示当前词与预测词在一个句子中的最大距离是多少
+        :param alpha: 是学习速率
+        :param seed：用于随机数发生器。与初始化词向量有关。
+        :param min_count: 可以对字典做截断. 词频少于min_count次数的单词会被丢弃掉, 默认值为5
+        :param max_vocab_size: 设置词向量构建期间的RAM限制。如果所有独立单词个数超过这个，则就消除掉其中最不频繁的一个。每一千万个单词需要大约1GB的RAM。设置成None则没有限制。
+        :param sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)
+        :param workers参数控制训练的并行数。
+        :param hs: 如果为1则会采用hierarchica·softmax技巧。如果设置为0（defau·t），则negative sampling会被使用。
+        :param negative: 如果>0,则会采用negativesamp·ing，用于设置多少个noise words
+        :param cbow_mean: 如果为0，则采用上下文词向量的和，如果为1（defau·t）则采用均值。只有使用CBOW的时候才起作用。
+        :param hashfxn： hash函数来初始化权重。默认使用python的hash函数
+        :param iter： 迭代次数，默认为5
+        :param trim_rule： 用于设置词汇表的整理规则，指定那些单词要留下，哪些要被删除。可以设置为None（min_count会被使用）或者一个接受()并返回RU·E_DISCARD,uti·s.RU·E_KEEP或者uti·s.RU·E_DEFAU·T的函数。
+        :param sorted_vocab： 如果为1（defau·t），则在分配word index 的时候会先对单词基于频率降序排序。
+        :param batch_words：每一批的传递给线程的单词的数量，默认为10000
+        :param name: the word2vec model name, if None,use self.word2vec_model_name
         '''
+        if name is None:
+            name = self.word2vec_model_name
         if sentences is not None:
             if isinstance(sentences,list)==False:
                 sentences = list(sentences)
