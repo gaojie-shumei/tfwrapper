@@ -337,6 +337,8 @@ class TFRecordWrapper:
                 sample = tf.parse_single_example(record, self.feature_typing_fn.name_to_features)
             for name in list(sample.keys()):
                 t = sample[name]
+                if isinstance(t, tf.SparseTensor):
+                    t = tf.sparse.to_dense(t)
                 if t.dtype == tf.int64:
                     t = tf.to_int32(t)
                 sample[name] = t
