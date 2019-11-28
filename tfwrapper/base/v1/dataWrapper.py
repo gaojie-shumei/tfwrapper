@@ -90,13 +90,14 @@ class TFDataWrapper:
 
     @staticmethod
     def wrapper(all_features: List[InputFeatures], batch_size, is_train=True,
-                drop_remainder=False, num_parallel_calls=None):
+                drop_remainder=False, num_parallel_calls=None,padded_shapes=None):
         '''
         :param all_features: the all data for network
         :param batch_size: batch size
         :param is_train:  is train set or not
         :param drop_remainder:  if len(all_features)%batch_size!=0, drop the next data or not
         :param num_parallel_calls: the data process with thread,if None,one thread
+        :param padded_shapes: if each sample is not same length, this param should provide for padding
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
@@ -171,9 +172,15 @@ class TFDataWrapper:
             except:
                 tf_data = tf_data.map(lambda x: x)
             try:
-                tf_data = tf_data.batch(batch_size, drop_remainder)
+                if padded_shapes is None:
+                    tf_data = tf_data.batch(batch_size, drop_remainder)
+                else:
+                    tf_data = tf_data.padded_batch(batch_size, padded_shapes, drop_remainder=drop_remainder)
             except:
-                tf_data = tf_data.batch(batch_size)
+                if padded_shapes is None:
+                    tf_data = tf_data.batch(batch_size)
+                else:
+                    tf_data = tf_data.padded_batch(batch_size, padded_shapes)
             it = tf_data.make_initializable_iterator()
             data = it.get_next()
             iterator_init = it.initializer
@@ -182,18 +189,19 @@ class TFDataWrapper:
         return tf_data, data, iterator_init
 
     def __call__(self, all_features: List[InputFeatures], batch_size, is_train=True,
-                 drop_remainder=False, num_parallel_calls=None):
+                 drop_remainder=False, num_parallel_calls=None,padded_shapes=None):
         '''
         :param all_features: the all data for network
         :param batch_size: batch size
         :param is_train:  is train set or not
         :param drop_remainder:  if len(all_features)%batch_size!=0, drop the next data or not
         :param num_parallel_calls: the data process with thread,if None,one thread
+        :param padded_shapes: if each sample is not same length, this param should provide for padding
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
         tf_data, data, iterator_init = self.wrapper(all_features, batch_size, is_train, drop_remainder,
-                                                    num_parallel_calls)
+                                                    num_parallel_calls,padded_shapes)
         return tf_data, data, iterator_init
 
 
@@ -336,13 +344,14 @@ class TFRecordWrapper:
             raise RuntimeError("tensorflow version must be less than 2,such as 1.13.1")
         return sample
 
-    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None,buffer_size=1000000000):
+    def read(self, is_train: bool, batch_size, drop_remainder=False, num_parallel_calls=None,buffer_size=1000000000,padded_shapes=None):
         '''
         :param is_train: is train set or not,if is train set, it will be repeat and shuffle
         :param batch_size: batch size for cpu or one GPU
         :param drop_remainder:  if the set is less than batch_size or batch_size*gpu_num,drop it or not
         :param num_parallel_calls: the data process with thread,if None,one thread
         :param buffer_size: the shuffle buffer size, it bigger than the data num for the best effect
+        :param padded_shapes: if each sample is not same length, this param should provide for padding
         :return:
             tf.data.Dataset,data with tensor,iterator_init
         '''
@@ -358,9 +367,15 @@ class TFRecordWrapper:
             except:
                 tf_record = tf_record.map(lambda record: self.__decode_record(record))
             try:
-                tf_record = tf_record.batch(batch_size, drop_remainder)
+                if padded_shapes is None:
+                    tf_record = tf_record.batch(batch_size, drop_remainder)
+                else:
+                    tf_record = tf_record.padded_batch(batch_size, padded_shapes, drop_remainder=drop_remainder)
             except:
-                tf_record = tf_record.batch(batch_size)
+                if padded_shapes is None:
+                    tf_record = tf_record.batch(batch_size)
+                else:
+                    tf_record = tf_record.padded_batch(batch_size, padded_shapes)
             it = tf_record.make_initializable_iterator()
             data = it.get_next()
             iterator_init = it.initializer
