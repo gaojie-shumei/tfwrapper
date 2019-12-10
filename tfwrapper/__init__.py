@@ -2,5 +2,5 @@ from tfwrapper.base import InputSample,InputFeatures,FeatureTypingFunctions,TFDa
 from tfwrapper.base import BaseDataProcessor,MnistDataProcessor
 from tfwrapper.utils import word2vecUtil,Word2vecUtil
 from tfwrapper.base import v1
-import tfwrapper.base as base
-import tfwrapper.utils as utils
+from tfwrapper import base
+from tfwrapper import utils
