@@ -9,18 +9,18 @@ class Auc(object):
         return
 
     def tf_auc(self, label, score, pos_label=1):
-        label = tf.reshape(label, (-1, ))
-        score = tf.reshape(score, (-1, ))
-        score_asc_index = tf.argsort(score)
-        pos_num = tf.count_nonzero(label, dtype="float")
-        neg_num = tf.count_nonzero(1-label, dtype="float")
+        label_new = tf.reshape(label, (-1, ))
+        score_new = tf.reshape(score, (-1, ))
+        score_asc_index = tf.argsort(score_new)
+        pos_num = tf.count_nonzero(label_new, dtype="float")
+        neg_num = tf.count_nonzero(1-label_new, dtype="float")
         # rank = tf.range(1, pos_num+neg_num+1)
-        label = tf.gather(label, score_asc_index)
-        pos_rank = tf.where(tf.equal(label, pos_label)) + 1
-        auc_score = (tf.cast(tf.reduce_sum(pos_rank), "float") - (pos_num*(pos_num+1)/2))
+        label_new_re_index = tf.gather(label_new, score_asc_index)
+        pos_rank = tf.where(tf.equal(label_new_re_index, pos_label)) + 1
+        overup = (tf.cast(tf.reduce_sum(pos_rank), "float") - (pos_num*(pos_num+1)/2))
         total = tf.multiply(pos_num, neg_num)
         total = tf.cond(total > 0, lambda: total, lambda: 1.0)
-        auc_score = auc_score / total
+        auc_score = overup / total
         self.parameters = tf.global_variables()
         return auc_score
 
