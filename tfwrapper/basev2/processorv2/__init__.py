@@ -1,0 +1,3 @@
+from tfwrapper.basev2.processorv2.baseDataProcessor import BaseDataProcessor as BaseDataProcessorV2
+from tfwrapper.basev2.processorv2.baseDataProcessor import GeneralDataProcessor as GeneralDataProcessorV2
+from tfwrapper.basev2.processorv2.baseDataProcessor import MnistDataProcessor as MnistDataProcessorV2
