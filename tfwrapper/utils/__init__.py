@@ -1,3 +1,2 @@
-from tfwrapper.utils.datautils import word2vecUtil
-from tfwrapper.utils.datautils.word2vecUtil import Word2vecUtil
-from tfwrapper.utils import datautils
+from tfwrapper.utils import word2vecUtil
+from tfwrapper.utils.word2vecUtil import Word2vecUtil
