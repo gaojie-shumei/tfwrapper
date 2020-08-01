@@ -4,10 +4,15 @@ Created on 2019年9月17日
 @author: gaojie-202
 '''
 import setuptools
+description = '''
+    This is a wrapper for tensorflow and a word2vecUtil with gensim, 
+    this version rewrite the datawrapper for general and set it in basev2 package,
+    or can use it with shuffix 'V2'
+    '''
 setuptools.setup(
     name = "tfwrapper",
-    version = "2.0.3",
-    description = "This is a wrapper for tensorflow, the word2vecUtil add method window_format, change datawrapper uncertain length data read",
+    version = "2.1.0",
+    description = description,
     author = "Jie Gao",
     maintainer = "Jie Gao",
     author_email = "gaojiexcq@163.com",
@@ -30,8 +35,8 @@ setuptools.setup(
 )
 # setuptools.setup(
 #     name = "tfwrapper-gpu",
-#     version = "2.0.3",
-#     description = "This is a wrapper for tensorflow, the word2vecUtil add method window_format, change datawrapper uncertain length data read",
+#     version = "2.1.0",
+#     description = description,
 #     author = "Jie Gao",
 #     maintainer = "Jie Gao",
 #     author_email = "gaojiexcq@163.com",
