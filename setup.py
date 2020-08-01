@@ -22,7 +22,7 @@ setuptools.setup(
     platforms = "python3",
     download_url = "https://github.com/gaojie-shumei/tfwrapper",
     install_requires = [
-        "tensorflow>=1.12",
+        "tensorflow>=1.13.1",
         "gensim<=3.6.0",
         "numpy"
     ],
@@ -46,7 +46,7 @@ setuptools.setup(
 #     platforms = "python3",
 #     download_url = "https://github.com/gaojie-shumei/tfwrapper",
 #     install_requires = [
-#         "tensorflow-gpu>=1.12",
+#         "tensorflow-gpu>=1.13.1",
 #         "gensim<=3.6.0",
 #         "numpy"
 #     ],
